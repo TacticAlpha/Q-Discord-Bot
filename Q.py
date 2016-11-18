@@ -5,6 +5,9 @@ import json
 bot = commands.Bot(command_prefix=['Q!', 'q!', '<@247866361064325121> '])
 bot.remove_command('help')
 
+token = ''
+your_id = ''
+
 
 def saveJson():
     with open('servers.json', 'w+') as f:
@@ -94,6 +97,7 @@ async def join(ctx, ign: str=None):
                 await bot.say(':exclamation: Please provide your in game name. `join <ign>`')
                 return
 
+
             global g_list
             g_list[server.id]['queue'].append([[author.mention, author.display_name], ign])
             saveJson()
@@ -113,12 +117,15 @@ async def next(ctx, mode=None, num=None):
     server, author = ctx.message.server, ctx.message.author
 
     if num is not None:
+
         if isAuthorized(ctx):
 
             if num == 'all':
                 num = len(g_list[server.id]['queue'])
 
             queued = len(g_list[server.id]['queue'])
+
+            num = int(num)
 
             if num > queued:
 
@@ -141,11 +148,14 @@ async def next(ctx, mode=None, num=None):
                 if mode == 'view':
                     string += ' but not removed from the queue.\n\n'
 
-
                 while num > 0:
 
                     num -= 1
-                    atFront.append(g_list[server.id]['queue'][num][0])
+                    if mode == 'take':
+                        atFront.append(g_list[server.id]['queue'][0])
+                    if mode == 'view':
+                        atFront.append(g_list[server.id]['queue'][num])
+
                     global g_list
                     if mode == 'take':
                         g_list[server.id]['queue'].remove(g_list[server.id]['queue'][0])
@@ -153,9 +163,9 @@ async def next(ctx, mode=None, num=None):
                 for y in atFront:
 
                     if mode == 'take':
-                        string += '{}: {}\n'.format(y[0], y[1])
+                        string += '{}: {}\n'.format(y[0][0], y[1])
                     if mode == 'view':
-                        string += '{}: {}\n'.format(y[1], y[1])
+                        string += '{}: {}\n'.format(y[0][1], y[1])
 
                 saveJson()
                 await bot.say(string)
@@ -265,7 +275,7 @@ async def debug(ctx, mode, *string):
 
     # This is a command only Tactic Alpha can run.
 
-    if ctx.message.author.id == '159023220140277760':
+    if ctx.message.author.id == your_id:
 
         string = ' '.join(string)
 
@@ -273,9 +283,12 @@ async def debug(ctx, mode, *string):
         author, server, channel = message.author, message.server, message.channel
 
         if mode == 'eval':
-            await bot.say(eval(string))
+            string = eval(string)
+            await bot.say('```{}```'.format(string))
         if mode == 'exec':
-            await bot.say(exec(string))
+			# Possibly Broken
+            string = exec(string)
+			await bot.say('```{}```'.format(string))
 
 
-bot.run('')
+bot.run(token)
